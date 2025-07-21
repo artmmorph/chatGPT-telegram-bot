@@ -1,12 +1,13 @@
 import os
+import asyncio
 from fastapi import FastAPI, Request
-import uvicorn
 import telegram
+import uvicorn
 from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
 
-# CORS middleware (если используешь фронтенд)
+# Разрешаем CORS (на всякий случай)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -15,7 +16,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Получаем переменные окружения
+# Переменные окружения
 TELEGRAM_TOKEN = os.environ["TELEGRAM_API_KEY"]
 CHAT_ID = os.environ["TELEGRAM_CHAT_ID"]
 USER_ID = os.environ["USER_ID"]
@@ -26,23 +27,27 @@ OPENAI_MODEL = os.environ["OPENAI_MODEL"]
 bot = telegram.Bot(token=TELEGRAM_TOKEN)
 
 @app.post("/")
-async def root(request: Request):
+async def handle(request: Request):
     data = await request.json()
-    user_input = data.get("message", "")
 
-    if str(data.get("user_id")) != str(USER_ID):
-        return {"error": "Unauthorized"}
+    # Проверка наличия сообщения
+    message = data.get("message")
+    if not message:
+        return {"status": "no message in request"}
 
-    # Здесь должен быть запрос к OpenAI
-    response = f"Echo: {user_input}"  # Вставь реальный вызов OpenAI API
+    text = message.get("text", "")
+    sender_id = message.get("from", {}).get("id")
 
-    bot.send_message(chat_id=CHAT_ID, text=response)
-    return {"status": "ok", "message": response}
-import uvicorn
-if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    import uvicorn
-    uvicorn.run("server:app", host="0.0.0.0", port=port)
+    # Проверка ID пользователя
+    if str(sender_id) != str(USER_ID):
+        return {"status": "unauthorized"}
 
+    # Генерация ответа (заглушка, пока нет OpenAI-запроса)
+    response = f"Вы сказали: {text}"
+
+    # Отправка сообщения через Telegram API в фоне
+    await asyncio.to_thread(bot.send_message, CHAT_ID, response)
+
+    return {"status": "ok"}
 
 

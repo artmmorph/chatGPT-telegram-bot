@@ -38,7 +38,11 @@ async def root(request: Request):
 
     bot.send_message(chat_id=CHAT_ID, text=response)
     return {"status": "ok", "message": response}
-
+import uvicorn
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 5000))
+    import uvicorn
+    uvicorn.run("server:app", host="0.0.0.0", port=port)
 
 
 

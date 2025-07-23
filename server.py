@@ -1,26 +1,21 @@
+import os
 from flask import Flask, request
 import telegram
-import os
 
 app = Flask(__name__)
 
-# Получаем токен Telegram из переменных окружения
-TOKEN = os.environ.get("TELEGRAM_TOKEN")
+TOKEN = os.environ.get("TELEGRAM_API_KEY")
 bot = telegram.Bot(token=TOKEN)
 
-# 👉 ОБЯЗАТЕЛЬНЫЙ маршрут для Render проверки
 @app.route("/", methods=["GET"])
-def home():
+def index():
     return "Bot is alive"
 
-# 👉 Обработка Telegram webhook
 @app.route(f"/{TOKEN}", methods=["POST"])
-def respond():
+def webhook():
     update = telegram.Update.de_json(request.get_json(force=True), bot)
     chat_id = update.message.chat.id
     message_text = update.message.text
-
-    # Ответ
     bot.send_message(chat_id=chat_id, text="Вы написали: " + message_text)
     return "ok"
 

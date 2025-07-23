@@ -9,3 +9,4 @@ stability-sdk
 pillow~=9.3.0
 fastapi
 uvicorn
+flask

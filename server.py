@@ -1,16 +1,28 @@
-from fastapi import FastAPI, Request
-import logging
+from flask import Flask, request
+import telegram
+import os
 
-app = FastAPI()
-logging.basicConfig(level=logging.INFO)
+app = Flask(__name__)
 
-@app.get("/")
-def read_root():
-    return {"status": "alive"}
+# Получаем токен Telegram из переменных окружения
+TOKEN = os.environ.get("TELEGRAM_TOKEN")
+bot = telegram.Bot(token=TOKEN)
 
-@app.post("/webhook")
-async def process_webhook(request: Request):
-    data = await request.json()
-    logging.info(f"📨 Новое сообщение: {data}")
-    return {"ok": True}
+# 👉 ОБЯЗАТЕЛЬНЫЙ маршрут для Render проверки
+@app.route("/", methods=["GET"])
+def home():
+    return "Bot is alive"
 
+# 👉 Обработка Telegram webhook
+@app.route(f"/{TOKEN}", methods=["POST"])
+def respond():
+    update = telegram.Update.de_json(request.get_json(force=True), bot)
+    chat_id = update.message.chat.id
+    message_text = update.message.text
+
+    # Ответ
+    bot.send_message(chat_id=chat_id, text="Вы написали: " + message_text)
+    return "ok"
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
